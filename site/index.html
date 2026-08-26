@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru" class="is-board">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoinTrack · Живая доска</title>
+  <meta name="description" content="CoinTrack - курсы криптовалют в USD и RUB.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body class="is-board">
+  <div id="app">
+    <header class="mast">
+      <div class="mast-brand">
+        <span class="mast-mark" aria-hidden="true"></span>
+        <div>
+          <strong>CoinTrack</strong>
+          <span>доска USD · RUB</span>
+        </div>
+      </div>
+      <nav class="mast-nav" aria-label="Разделы">
+        <a href="index.html" class="is-active">Доска</a>
+        <a href="about.html">О проекте</a>
+        <a href="markets.html">Рынки</a>
+        <a href="methodology.html">Метод</a>
+        <a href="privacy.html">Конфиденциальность</a>
+      </nav>
+      <div class="mast-meta" id="mast-meta">Загрузка рынков…</div>
+      <button type="button" class="rail-toggle" id="rail-toggle" aria-label="Список рынков" hidden>
+        <span></span><span></span>
+      </button>
+    </header>
+
+    <div class="shell" id="shell">
+      <aside class="rail" id="rail" aria-label="Рынки"></aside>
+
+      <section class="stage" id="stage">
+        <div class="stage-empty" id="stage-empty">Выберите рынок из списка</div>
+        <div class="stage-body is-hidden" id="stage-body">
+          <div class="stage-grid">
+            <div class="metric" data-key="rank"><b></b><span>Ранг</span></div>
+            <div class="metric" data-key="name"><b></b><span>Название</span></div>
+            <div class="metric wide" data-key="usd"><b></b><span>Цена USD</span></div>
+            <div class="metric wide" data-key="rub"><b></b><span>Цена RUB</span></div>
+            <div class="metric" data-key="mcap"><b></b><span>Капитализация</span></div>
+            <div class="metric" data-key="vol"><b></b><span>Объём 24ч</span></div>
+            <div class="metric" data-key="supply"><b></b><span>В обращении</span></div>
+            <div class="metric" data-key="chg"><b></b><span>Изменение 24ч</span></div>
+          </div>
+
+          <div class="chart-pane">
+            <div class="chart-toolbar">
+              <p id="chart-label">График 24ч</p>
+              <div class="ranges" role="tablist">
+                <button type="button" class="range active" data-days="1">24Ч</button>
+                <button type="button" class="range" data-days="7">7Д</button>
+                <button type="button" class="range" data-days="30">30Д</button>
+              </div>
+            </div>
+            <div class="chart-frame" id="chart-frame">
+              <canvas id="price-chart" aria-label="График цены"></canvas>
+              <div class="chart-spin is-hidden" id="chart-spin"></div>
+              <p class="chart-error is-hidden" id="chart-error"></p>
+              <div class="skel-chart is-hidden" id="skel-chart" aria-hidden="true">
+                <div class="skel-chart-body">
+                  <div class="skel-chart-plot"></div>
+                  <div class="skel-chart-y">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+                <div class="skel-chart-x">
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="watermark" id="watermark" aria-hidden="true"></div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</body>
+</html>

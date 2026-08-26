@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru" class="is-page">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Рынки · CoinTrack</title>
+  <meta name="description" content="Фиксированный список ликвидных рынков CoinTrack: BTC, ETH, USDT, BNB, SOL, XRP, USDC, TON.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="is-page">
+  <div id="app" class="page-app">
+    <header class="mast">
+      <a class="mast-brand" href="index.html">
+        <span class="mast-mark" aria-hidden="true"></span>
+        <div>
+          <strong>CoinTrack</strong>
+          <span>доска USD · RUB</span>
+        </div>
+      </a>
+      <nav class="mast-nav" aria-label="Разделы">
+        <a href="index.html">Доска</a>
+        <a href="about.html">О проекте</a>
+        <a href="markets.html" class="is-active">Рынки</a>
+        <a href="methodology.html">Метод</a>
+        <a href="privacy.html">Конфиденциальность</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <p class="page-kicker">Рынки</p>
+      <h1>Восемь ликвидных имён, фиксированный порядок</h1>
+      <p>
+        Доска не переставляет монеты по капитализации при каждом обновлении.
+        Ранг стабилен, чтобы привычный порядок списка не прыгал между сессиями.
+      </p>
+      <ul class="page-list">
+        <li><strong>BTC</strong> - Bitcoin, основной резервный актив на доске</li>
+        <li><strong>ETH</strong> - Ethereum, слой смарт-контрактов</li>
+        <li><strong>USDT</strong> - Tether, долларовый ориентир ликвидности</li>
+        <li><strong>BNB</strong> - BNB, токен экосистемы биржи</li>
+        <li><strong>SOL</strong> - Solana, высокопроизводительный L1</li>
+        <li><strong>XRP</strong> - XRP, актив платёжного реестра</li>
+        <li><strong>USDC</strong> - USD Coin, регулируемый стейблкоин</li>
+        <li><strong>TON</strong> - Toncoin, L1 рядом с мессенджер-экосистемой</li>
+      </ul>
+      <p>
+        В каждой строке - спот в USD, пересчёт в RUB, изменение за 24 часа и график
+        на диапазонах 24ч / 7д / 30д. Стейблкоины включены намеренно: отклонение
+        от пега часто информативнее очередного mid-cap альта.
+      </p>
+      <p class="page-foot">
+        <a href="index.html">Открыть живую доску</a>
+        ·
+        <a href="methodology.html">Источники и запасные пути</a>
+      </p>
+    </main>
+  </div>
+</body>
+</html>
