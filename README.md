@@ -29,9 +29,11 @@ Internet :80/:443
 TelegramWebProxy/
 ├── install-proxy.sh      # установка прокси
 ├── uninstall-proxy.sh    # удаление прокси
-├── clean-all.sh          # полная очистка компонентов прокси
+├── clean-all.sh          # полный сброс VPS
 ├── status-proxy.sh       # статус и health-check
 ├── deploy-site.sh        # деплой сайта из site/
+├── open-ports.sh         # открыть порты 80/443 (Oracle iptables)
+├── check-ports.sh        # диагностика портов
 ├── lib/common.sh         # общие функции
 ├── tproxy-server/        # исходники официального relay
 └── site/                 # статический публичный сайт
@@ -161,6 +163,30 @@ sudo bash deploy-site.sh /path/to/custom-site
 Подтверждение: введите **hostname сервера**, затем `FACTORY-RESET`.
 
 Разница с `uninstall-proxy.sh`: `uninstall-proxy.sh` снимает только прокси, `clean-all.sh` полностью обнуляет VPS.
+
+### open-ports.sh
+
+Открывает порты **80** и **443** в iptables на Oracle Ubuntu (и сохраняет после reboot):
+
+```bash
+sudo bash open-ports.sh
+sudo bash open-ports.sh 80 443
+```
+
+Вызывается автоматически при `install-proxy.sh`.
+
+**Важно для Oracle Cloud:** кроме iptables на сервере, в консоли Oracle нужно:
+- Security List -> Ingress: TCP 80, 443 from `0.0.0.0/0`
+- Если у VNIC есть NSG - правила нужны и там
+
+### check-ports.sh
+
+Диагностика, почему сайт не открывается снаружи:
+
+```bash
+sudo bash check-ports.sh
+sudo bash check-ports.sh 80 443
+```
 
 ## Публичный сайт
 

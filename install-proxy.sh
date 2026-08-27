@@ -90,6 +90,10 @@ apt-get install -y --no-install-recommends \
 echo "      OK"
 
 echo
+echo "[+] Opening firewall ports (Oracle Cloud)..."
+bash "$SCRIPT_DIR/open-ports.sh" 80 443
+
+echo
 echo "[3/10] Checking ports..."
 check_install_port 80 caddy
 check_install_port 443 caddy
