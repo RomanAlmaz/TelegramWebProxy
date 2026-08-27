@@ -6,14 +6,14 @@
   const TOP_LIMIT = 8;
 
   const ASSETS = [
-    { id: "bitcoin", symbol: "BTC", name: "Bitcoin", pair: "BTCUSDT", tone: "#f7931a", usd: 63670, supply: 1.987e7, volume: 2.8e10, change: 0.35, image: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png" },
-    { id: "ethereum", symbol: "ETH", name: "Ethereum", pair: "ETHUSDT", tone: "#627eea", usd: 2485, supply: 1.204e8, volume: 1.5e10, change: 0.62, image: "https://assets.coingecko.com/coins/images/279/small/ethereum.png" },
-    { id: "tether", symbol: "USDT", name: "Tether", pair: null, tone: "#26a17b", usd: 1, supply: 1.2e11, volume: 5.5e10, change: 0.01, image: "https://assets.coingecko.com/coins/images/325/small/Tether.png" },
-    { id: "binancecoin", symbol: "BNB", name: "BNB", pair: "BNBUSDT", tone: "#f3ba2f", usd: 610, supply: 1.45e8, volume: 1.8e9, change: -0.28, image: "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png" },
-    { id: "solana", symbol: "SOL", name: "Solana", pair: "SOLUSDT", tone: "#14f195", usd: 148, supply: 4.7e8, volume: 3.2e9, change: 1.15, image: "https://assets.coingecko.com/coins/images/4128/small/solana.png" },
-    { id: "ripple", symbol: "XRP", name: "XRP", pair: "XRPUSDT", tone: "#00a2e8", usd: 0.62, supply: 5.6e10, volume: 1.4e9, change: -0.45, image: "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png" },
-    { id: "usd-coin", symbol: "USDC", name: "USDC", pair: "USDCUSDT", tone: "#2775ca", usd: 1, supply: 3.5e10, volume: 6.5e9, change: 0.0, image: "https://assets.coingecko.com/coins/images/6319/small/usdc.png" },
-    { id: "the-open-network", symbol: "TON", name: "Toncoin", pair: "TONUSDT", tone: "#0098ea", usd: 5.4, supply: 2.5e9, volume: 2.1e8, change: 0.55, image: "https://assets.coingecko.com/coins/images/17980/small/ton_symbol.png" },
+    { id: "bitcoin", symbol: "BTC", name: "Bitcoin", pair: "BTCUSDT", tone: "#f7931a", usd: 63670, supply: 1.987e7, volume: 2.8e10, change: 0.35, image: "icons/bitcoin.png" },
+    { id: "ethereum", symbol: "ETH", name: "Ethereum", pair: "ETHUSDT", tone: "#627eea", usd: 2485, supply: 1.204e8, volume: 1.5e10, change: 0.62, image: "icons/ethereum.png" },
+    { id: "tether", symbol: "USDT", name: "Tether", pair: null, tone: "#26a17b", usd: 1, supply: 1.2e11, volume: 5.5e10, change: 0.01, image: "icons/tether.png" },
+    { id: "binancecoin", symbol: "BNB", name: "BNB", pair: "BNBUSDT", tone: "#f3ba2f", usd: 610, supply: 1.45e8, volume: 1.8e9, change: -0.28, image: "icons/bnb.png" },
+    { id: "solana", symbol: "SOL", name: "Solana", pair: "SOLUSDT", tone: "#14f195", usd: 148, supply: 4.7e8, volume: 3.2e9, change: 1.15, image: "icons/solana.png" },
+    { id: "ripple", symbol: "XRP", name: "XRP", pair: "XRPUSDT", tone: "#00a2e8", usd: 0.62, supply: 5.6e10, volume: 1.4e9, change: -0.45, image: "icons/xrp.png" },
+    { id: "usd-coin", symbol: "USDC", name: "USDC", pair: "USDCUSDT", tone: "#2775ca", usd: 1, supply: 3.5e10, volume: 6.5e9, change: 0.0, image: "icons/usdc.png" },
+    { id: "the-open-network", symbol: "TON", name: "Toncoin", pair: "TONUSDT", tone: "#0098ea", usd: 5.4, supply: 2.5e9, volume: 2.1e8, change: 0.55, image: "icons/ton.png" },
   ];
 
   const els = {
@@ -319,7 +319,7 @@
       const img = coinImage(coin);
       btn.innerHTML = `
         <span class="coin-rank">${coin.rank ?? "-"}</span>
-        <img src="${img}" alt="" width="36" height="36" decoding="async" referrerpolicy="no-referrer">
+        <img src="${img}" alt="" width="36" height="36" decoding="async">
         <span class="coin-copy">
           <strong>${coin.name}</strong>
           <small>${money(coin.usd, "USD")} · ${money(coin.rub, "RUB")}</small>
@@ -353,7 +353,6 @@
     ASSETS.forEach((a) => {
       const img = new Image();
       img.decoding = "async";
-      img.referrerPolicy = "no-referrer";
       img.src = a.image;
     });
   }

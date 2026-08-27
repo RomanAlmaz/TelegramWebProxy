@@ -233,6 +233,7 @@ body.is-page #app,
   height: 36px;
   border-radius: 50%;
   background: #0a1622;
+  object-fit: contain;
 }
 
 .coin-copy strong {

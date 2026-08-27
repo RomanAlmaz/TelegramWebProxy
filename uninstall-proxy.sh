@@ -9,15 +9,15 @@ source "$SCRIPT_DIR/lib/common.sh"
 require_root
 
 echo "============================================================"
-echo "          TELEGRAM WEB PROXY UNINSTALLER"
+echo "          УДАЛЕНИЕ TELEGRAM WEB PROXY"
 echo "============================================================"
 echo
-echo "This removes components installed by the Web Proxy installer."
-echo "Existing components that were detected as pre-existing are kept."
+echo "Будут удалены компоненты, установленные установщиком Web Proxy."
+echo "Компоненты, которые уже были на сервере до установки, сохраняются."
 echo
-echo "Type REMOVE to continue:"
+echo "Введите REMOVE для продолжения:"
 read -r CONFIRM
-[[ "$CONFIRM" == "REMOVE" ]] || { echo "Cancelled."; exit 0; }
+[[ "$CONFIRM" == "REMOVE" ]] || { echo "Отменено."; exit 0; }
 
 REUSED_CADDY=0
 REUSED_MT=0
@@ -29,15 +29,15 @@ if [[ -r "$MANIFEST" ]]; then
     REUSED_RELAY="$(read_manifest_value reused_relay 0)"
 else
     echo
-    echo "WARNING: ownership manifest not found."
-    echo "Conservative mode is enabled: pre-existing MTProxy, relay and Caddy are preserved."
+    echo "ВНИМАНИЕ: manifest установки не найден."
+    echo "Включён консервативный режим: MTProxy, relay и Caddy сохраняются."
     REUSED_CADDY=1
     REUSED_MT=1
     REUSED_RELAY=1
 fi
 
 echo
-echo "[1/7] Stopping installer services..."
+echo "[1/7] Остановка сервисов установщика..."
 
 for unit in \
     tproxy-firewall.service \
@@ -51,7 +51,7 @@ done
 [[ "$REUSED_MT" == "1" ]] || systemctl stop mtproxy.service 2>/dev/null || true
 [[ "$REUSED_CADDY" == "1" ]] || systemctl stop caddy.service 2>/dev/null || true
 
-echo "[2/7] Disabling installer services..."
+echo "[2/7] Отключение сервисов установщика..."
 
 for unit in \
     tproxy-firewall.service \
@@ -65,7 +65,7 @@ done
 [[ "$REUSED_MT" == "1" ]] || systemctl disable mtproxy.service 2>/dev/null || true
 [[ "$REUSED_CADDY" == "1" ]] || systemctl disable caddy.service 2>/dev/null || true
 
-echo "[3/7] Removing installer service files..."
+echo "[3/7] Удаление unit-файлов установщика..."
 
 rm -f \
     /etc/systemd/system/tproxy-firewall.service \
@@ -79,7 +79,7 @@ rm -f \
 
 rm -f /etc/systemd/system/caddy.service.d/tproxy.conf
 
-echo "[4/7] Removing proxy files..."
+echo "[4/7] Удаление файлов прокси..."
 
 rm -rf \
     "$INSTALLED_REPO" \
@@ -98,7 +98,7 @@ if [[ "$REUSED_MT" != "1" ]]; then
     rm -rf /etc/mtproxy
 fi
 
-echo "[5/7] Removing installer users..."
+echo "[5/7] Удаление пользователей установщика..."
 
 if [[ "$REUSED_RELAY" != "1" ]] && id tproxy >/dev/null 2>&1; then
     home="$(getent passwd tproxy | cut -d: -f6 || true)"
@@ -116,27 +116,27 @@ if [[ "$REUSED_MT" != "1" ]] && id mtproxy >/dev/null 2>&1; then
     fi
 fi
 
-echo "[6/7] Cleaning firewall and runtime state..."
+echo "[6/7] Очистка firewall и runtime-состояния..."
 remove_proxy_firewall
 rm -f "$MANIFEST"
 
 systemctl daemon-reload
 systemctl reset-failed 2>/dev/null || true
 
-echo "[7/7] Final verification..."
+echo "[7/7] Финальная проверка..."
 
 echo
-echo "Remaining related units:"
+echo "Оставшиеся связанные unit-ы:"
 systemctl list-unit-files 2>/dev/null | grep -E '^(mtproxy|tproxy-server|tproxy-firewall|refresh-mtproxy-config)\.' || true
 
 echo
 echo "============================================================"
-echo "             TELEGRAM WEB PROXY REMOVED"
+echo "          TELEGRAM WEB PROXY УДАЛЁН"
 echo "============================================================"
 echo
-echo "The installer-owned proxy components have been removed."
-echo "Shared OS packages were intentionally NOT removed."
-echo "A pre-existing Caddy/MTProxy/relay was preserved if detected."
+echo "Компоненты прокси, установленные установщиком, удалены."
+echo "Общие системные пакеты намеренно не удалялись."
+echo "Ранее существовавшие Caddy/MTProxy/relay сохранены, если были обнаружены."
 echo
-echo "Reboot is normally not required."
+echo "Перезагрузка обычно не требуется."
 echo "============================================================"

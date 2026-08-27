@@ -23,11 +23,11 @@ clear 2>/dev/null || true
 
 cat <<EOF
 ============================================================
-      TELEGRAM WEB PROXY INSTALLER V ${VERSION}
+   УСТАНОВЩИК TELEGRAM WEB PROXY v${VERSION}
 ============================================================
 
-Repository: ${PROJECT_REPO_URL}
-Project root: ${PROJECT_ROOT}
+Репозиторий: ${PROJECT_REPO_URL}
+Корень проекта: ${PROJECT_ROOT}
 ============================================================
 EOF
 
@@ -38,23 +38,23 @@ require_local_site
 
 while true; do
     echo
-    read -r -p "Domain (example: proxy.example.com): " DOMAIN
+    read -r -p "Домен (пример: proxy.example.com): " DOMAIN
     DOMAIN="$(trim "$DOMAIN")"
     DOMAIN="${DOMAIN,,}"
     valid_domain "$DOMAIN" && break
-    echo "Invalid domain. Example: proxy.example.com"
+    echo "Некорректный домен. Пример: proxy.example.com"
 done
 
 while true; do
     echo
-    read -r -p "ACME email (example: admin@example.com): " EMAIL
+    read -r -p "Email для ACME/Let's Encrypt (пример: admin@example.com): " EMAIL
     EMAIL="$(trim "$EMAIL")"
     valid_email "$EMAIL" && break
-    echo "Invalid email. Example: admin@example.com"
+    echo "Некорректный email. Пример: admin@example.com"
 done
 
 echo
-read -r -p "Generate a secure secret automatically? [Y/n]: " MODE
+read -r -p "Сгенерировать secret автоматически? [Y/n]: " MODE
 MODE="$(trim "${MODE:-Y}")"
 
 if [[ -z "$MODE" || "$MODE" =~ ^[Yy]$ ]]; then
@@ -67,21 +67,21 @@ if [[ -z "$MODE" || "$MODE" =~ ^[Yy]$ ]]; then
 else
     while true; do
         echo
-        read -r -s -p "WEB proxy secret (32 lowercase hex, optionally dd + 32 hex): " SECRET
+        read -r -s -p "Secret Web Proxy (32 hex-символа, опционально dd + 32 hex): " SECRET
         echo
         valid_secret "$SECRET" && break
-        echo "Invalid secret."
+        echo "Некорректный secret."
     done
 fi
 
-valid_secret "$SECRET" || die "Secret is invalid."
+valid_secret "$SECRET" || die "Некорректный secret."
 
 echo
-echo "[1/10] Checking system..."
+echo "[1/10] Проверка системы..."
 echo "      Ubuntu ${VERSION_ID} / x86_64"
 
 echo
-echo "[2/10] Installing dependencies..."
+echo "[2/10] Установка зависимостей..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
@@ -90,11 +90,11 @@ apt-get install -y --no-install-recommends \
 echo "      OK"
 
 echo
-echo "[+] Opening firewall ports (Oracle Cloud)..."
-bash "$SCRIPT_DIR/open-ports.sh" 80 443
+echo "[+] Открытие портов firewall (Oracle Cloud)..."
+bash "$SCRIPT_DIR/oracle-ports/open-ports.sh" 80 443
 
 echo
-echo "[3/10] Checking ports..."
+echo "[3/10] Проверка портов..."
 check_install_port 80 caddy
 check_install_port 443 caddy
 check_install_port 2398 mtproto-proxy
@@ -110,7 +110,7 @@ if [[ -f "$EXISTING_CADDY_CONF" ]]; then
     EXISTING_EMAIL="$(sed -n 's/^Environment=ACME_EMAIL=//p' "$EXISTING_CADDY_CONF" | head -n1)"
 
     if [[ -n "$EXISTING_DOMAIN" && "$EXISTING_DOMAIN" != "$DOMAIN" ]]; then
-        die "Existing Web Proxy uses domain ${EXISTING_DOMAIN}. Use that domain or uninstall first."
+        die "Уже установлен Web Proxy с доменом ${EXISTING_DOMAIN}. Используйте этот домен или сначала выполните uninstall-proxy.sh."
     fi
 
     if [[ -n "$EXISTING_DOMAIN" ]] &&
@@ -119,45 +119,45 @@ if [[ -f "$EXISTING_CADDY_CONF" ]]; then
         REUSE_CADDY=1
         DOMAIN="$EXISTING_DOMAIN"
         [[ -n "$EXISTING_EMAIL" ]] && EMAIL="$EXISTING_EMAIL"
-        echo "      Existing HTTPS is already working; certificate/configuration will be reused."
+        echo "      HTTPS уже работает; сертификат и конфигурация будут переиспользованы."
     fi
 fi
 
 echo
-echo "[4/10] Checking DNS..."
+echo "[4/10] Проверка DNS..."
 if [[ "$REUSE_EXISTING_HTTPS" == "1" ]]; then
     DNS_IP="$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}')"
-    [[ -n "$DNS_IP" ]] || die "Existing HTTPS works, but DNS lookup failed for $DOMAIN."
-    echo "      Existing HTTPS verified: $DOMAIN -> $DNS_IP"
+    [[ -n "$DNS_IP" ]] || die "HTTPS работает, но DNS-запрос для $DOMAIN не удался."
+    echo "      HTTPS проверен: $DOMAIN -> $DNS_IP"
 else
     DNS_IP="$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}')"
-    [[ -n "$DNS_IP" ]] || die "No IPv4 A record found for $DOMAIN."
+    [[ -n "$DNS_IP" ]] || die "Не найдена IPv4 A-запись для $DOMAIN."
 
     VPS_IP="$(curl -4fsS --max-time 10 https://api.ipify.org || true)"
     if [[ -n "$VPS_IP" && "$DNS_IP" != "$VPS_IP" ]]; then
         echo "      DNS: $DNS_IP"
         echo "      VPS: $VPS_IP"
-        die "DNS does not point to this VPS."
+        die "DNS не указывает на этот VPS."
     fi
     echo "      $DOMAIN -> $DNS_IP"
 fi
 
 echo
-echo "[5/10] Preparing local source..."
+echo "[5/10] Подготовка исходников..."
 ensure_tproxy_repo
 rm -rf "$INSTALLED_REPO"
 install -d -m 0755 "$INSTALLED_REPO"
 cp -a "$TPROXY_REPO/." "$INSTALLED_REPO/"
-echo "      Source copied to $INSTALLED_REPO"
+echo "      Исходники скопированы в $INSTALLED_REPO"
 
 echo
-echo "[6/10] Installing Telegram Web Proxy components..."
+echo "[6/10] Установка компонентов Telegram Web Proxy..."
 
 if [[ -x /opt/MTProxy/objs/bin/mtproto-proxy ]] &&
     systemctl list-unit-files mtproxy.service >/dev/null 2>&1 &&
     port_has_expected_process 2398 mtproto-proxy; then
     REUSE_MT=1
-    echo "      Existing MTProxy detected; reusing it."
+    echo "      Найден MTProxy; переиспользуем."
 fi
 
 if [[ -x /usr/local/bin/tproxy-server ]] &&
@@ -165,7 +165,7 @@ if [[ -x /usr/local/bin/tproxy-server ]] &&
     port_has_expected_process 8080 tproxy-server &&
     port_has_expected_process 8081 tproxy-server; then
     REUSE_RELAY=1
-    echo "      Existing tproxy-server detected; reusing it."
+    echo "      Найден tproxy-server; переиспользуем."
 fi
 
 if [[ -x /usr/local/bin/caddy ]] &&
@@ -173,13 +173,13 @@ if [[ -x /usr/local/bin/caddy ]] &&
     port_has_expected_process 80 caddy &&
     port_has_expected_process 443 caddy; then
     REUSE_CADDY=1
-    echo "      Existing Caddy detected; reusing it."
+    echo "      Найден Caddy; переиспользуем."
 fi
 
 if [[ "$REUSE_CADDY" == "1" ]]; then
-    echo "      Caddy already installed; reusing it."
+    echo "      Caddy уже установлен; переиспользуем."
 else
-    echo "      Installing Caddy..."
+    echo "      Установка Caddy..."
     caddy_version="2.11.4"
     caddy_sha512="8220d1f013b6f27510247b2360c9e0ca9f018feebd82515f07635318b34ff9777ccc8fd0b6e6f2486ce3a33fe389fbb7db12d05baa474f4587509fb4f5ebf1c9"
 
@@ -192,7 +192,7 @@ else
         "https://github.com/caddyserver/caddy/releases/download/v${caddy_version}/caddy_${caddy_version}_linux_amd64.tar.gz"
 
     test "$(sha512sum "$caddy_archive" | awk '{print $1}')" = "$caddy_sha512" ||
-        die "Caddy checksum verification failed."
+        die "Проверка контрольной суммы Caddy не прошла."
 
     tar -C "$caddy_directory" -xzf "$caddy_archive"
     install -m 0755 "$caddy_directory/caddy" /usr/local/bin/caddy
@@ -206,18 +206,18 @@ else
     install -d -o caddy -g caddy -m 0750 /var/lib/caddy
 fi
 
-echo "      Installing official MTProxy..."
+echo "      Установка официального MTProxy..."
 if [[ "$REUSE_MT" != "1" ]]; then
     "$INSTALLED_REPO/deploy/install-mtproxy.sh"
 else
-    echo "      MTProxy installation skipped; existing instance is already listening on :2398."
+    echo "      Установка MTProxy пропущена; уже слушает :2398."
 fi
 
 if ! id tproxy >/dev/null 2>&1; then
     useradd --system --home /nonexistent --shell /usr/sbin/nologin tproxy
 fi
 
-echo "      Installing Go relay..."
+echo "      Установка Go relay..."
 go_version="1.26.5"
 go_sha256="5c2c3b16caefa1d968a94c1daca04a7ca301a496d9b086e17ad77bb81393f053"
 
@@ -233,7 +233,7 @@ else
         "https://go.dev/dl/go${go_version}.linux-amd64.tar.gz"
 
     test "$(sha256sum "$go_archive" | awk '{print $1}')" = "$go_sha256" ||
-        die "Go checksum verification failed."
+        die "Проверка контрольной суммы Go не прошла."
 
     tar -C "$go_directory" -xzf "$go_archive"
     mv "$go_directory/go" "/opt/go${go_version}"
@@ -243,9 +243,9 @@ else
 fi
 
 if [[ "$REUSE_RELAY" == "1" ]]; then
-    echo "      Existing tproxy-server binary is already active; reusing it."
+    echo "      tproxy-server уже активен; переиспользуем."
 else
-    echo "      Building relay..."
+    echo "      Сборка relay..."
     (
         cd "$INSTALLED_REPO"
         "$go_binary" build -trimpath -ldflags='-s -w' \
@@ -255,10 +255,10 @@ else
     chmod 0755 /usr/local/bin/tproxy-server
 fi
 
-echo "      Deploying public site from ${SITE_SOURCE}..."
+echo "      Деплой публичного сайта из ${SITE_SOURCE}..."
 deploy_site_files "$SITE_SOURCE" "$SITE_TARGET"
 
-echo "      Preparing configuration..."
+echo "      Подготовка конфигурации..."
 install -d -o root -g tproxy -m 0750 /etc/tproxy-server
 
 cat > /etc/tproxy-server/config.json <<EOF
@@ -293,17 +293,17 @@ EOF
 chown root:mtproxy /etc/mtproxy/mtproxy.env
 chmod 0640 /etc/mtproxy/mtproxy.env
 
-echo "      Installing service files..."
+echo "      Установка unit-файлов systemd..."
 if [[ "$REUSE_CADDY" != "1" ]]; then
     install -m 0644 "$INSTALLED_REPO/deploy/Caddyfile" /etc/caddy/Caddyfile
     install -m 0644 "$INSTALLED_REPO/deploy/caddy.service" /etc/systemd/system/caddy.service
 else
-    echo "      Preserving existing Caddyfile and Caddy service."
+    echo "      Сохраняем существующие Caddyfile и сервис Caddy."
 fi
 
 install -d -m 0755 /etc/systemd/system/caddy.service.d
 if [[ "$REUSE_EXISTING_HTTPS" == "1" ]]; then
-    echo "      Preserving existing working Caddy environment."
+    echo "      Сохраняем рабочую конфигурацию Caddy."
 else
     cat > /etc/systemd/system/caddy.service.d/tproxy.conf <<EOF
 [Service]
@@ -324,10 +324,10 @@ install -m 0644 "$INSTALLED_REPO/deploy/refresh-mtproxy-config.timer" /etc/syste
 install -m 0644 "$INSTALLED_REPO/deploy/firewall.nft" /etc/tproxy-server/firewall.nft
 install -m 0755 "$INSTALLED_REPO/deploy/refresh-mtproxy-config.sh" /usr/local/sbin/refresh-mtproxy-config
 
-echo "      Preflight validation..."
+echo "      Предварительная проверка..."
 fix_mtproxy_permissions
 runuser -u tproxy -- test -r "$SITE_TARGET/index.html" ||
-    die "Public site is not readable by tproxy."
+    die "Пользователь tproxy не может прочитать публичный сайт."
 
 /usr/local/bin/tproxy-server \
     -config /etc/tproxy-server/config.json \
@@ -343,10 +343,10 @@ ACME_EMAIL="$EMAIL" \
 
 systemctl daemon-reload
 
-echo "      Starting firewall..."
+echo "      Запуск firewall..."
 systemctl enable --now tproxy-firewall.service
 
-echo "      Starting MTProxy..."
+echo "      Запуск MTProxy..."
 fix_mtproxy_permissions
 systemctl enable mtproxy.service
 systemctl reset-failed mtproxy.service 2>/dev/null || true
@@ -361,12 +361,12 @@ for _ in $(seq 1 20); do
     fi
     sleep 1
 done
-[[ "$MT_READY" == "1" ]] || die "MTProxy did not start on port 2398."
+[[ "$MT_READY" == "1" ]] || die "MTProxy не запустился на порту 2398."
 echo "      MTProxy :2398 OK"
 
-echo "      Starting relay..."
+echo "      Запуск relay..."
 runuser -u tproxy -- test -r "$SITE_TARGET/index.html" ||
-    die "tproxy user cannot read site before relay start."
+    die "Пользователь tproxy не может прочитать сайт перед запуском relay."
 
 systemctl enable tproxy-server.service
 systemctl reset-failed tproxy-server.service 2>/dev/null || true
@@ -383,7 +383,7 @@ for _ in $(seq 1 30); do
 done
 
 if [[ "$RELAY_READY" != "1" ]]; then
-    echo "      Relay not ready; running automatic recovery..."
+    echo "      Relay не готов; автоматическое восстановление..."
     fix_mtproxy_permissions
     chown -R root:tproxy "$SITE_TARGET"
     find "$SITE_TARGET" -type d -exec chmod 0750 {} +
@@ -403,20 +403,20 @@ if [[ "$RELAY_READY" != "1" ]]; then
     done
 fi
 
-[[ "$RELAY_READY" == "1" ]] || die "tproxy-server did not become ready."
+[[ "$RELAY_READY" == "1" ]] || die "tproxy-server не перешёл в состояние ready."
 echo "      Relay /readyz OK"
 
-echo "      Starting refresh timer..."
+echo "      Запуск таймера обновления MTProxy..."
 systemctl enable --now refresh-mtproxy-config.timer
 
-echo "      Starting Caddy..."
+echo "      Запуск Caddy..."
 systemctl enable caddy.service
 systemctl restart caddy.service
 
 echo
-echo "[9/10] Running health checks..."
+echo "[9/10] Проверка работоспособности..."
 curl -fsS --max-time 5 http://127.0.0.1:8081/healthz >/dev/null ||
-    die "tproxy-server healthz failed."
+    die "Проверка healthz tproxy-server не прошла."
 
 echo "      healthz OK"
 
@@ -424,7 +424,7 @@ HTTPS_READY=0
 
 if [[ "$REUSE_EXISTING_HTTPS" == "1" ]]; then
     HTTPS_READY=1
-    echo "      Existing HTTPS certificate/config is already working."
+    echo "      HTTPS-сертификат и конфигурация уже работают."
 else
     for _ in $(seq 1 90); do
         if curl -fsSI --max-time 5 "https://${DOMAIN}/" >/dev/null 2>&1; then
@@ -436,31 +436,31 @@ else
 fi
 
 if [[ "$HTTPS_READY" != "1" ]]; then
-    echo "      Caddy diagnostic:"
+    echo "      Диагностика Caddy:"
     journalctl -u caddy -n 60 --no-pager 2>/dev/null || true
-    die "HTTPS did not become ready within 180 seconds. Check Caddy/ACME/DNS."
+    die "HTTPS не стал доступен за 180 секунд. Проверьте Caddy/ACME/DNS."
 fi
 
 echo "      HTTPS OK"
 
 echo
-echo "[10/10] Checking persistence and ports..."
+echo "[10/10] Проверка автозапуска и портов..."
 for unit in mtproxy tproxy-server caddy; do
-    systemctl is-active --quiet "$unit" || die "$unit is not active."
-    systemctl is-enabled --quiet "$unit" || die "$unit is not enabled."
+    systemctl is-active --quiet "$unit" || die "$unit не активен."
+    systemctl is-enabled --quiet "$unit" || die "$unit не включён в автозапуск."
 done
 
-systemctl is-active --quiet tproxy-firewall || die "tproxy-firewall is not active."
-systemctl is-enabled --quiet refresh-mtproxy-config.timer || die "refresh timer is not enabled."
+systemctl is-active --quiet tproxy-firewall || die "tproxy-firewall не активен."
+systemctl is-enabled --quiet refresh-mtproxy-config.timer || die "таймер обновления не включён в автозапуск."
 
 runuser -u mtproxy -- test -x /opt/MTProxy/objs/bin/mtproto-proxy ||
-    die "Final MTProxy permission check failed."
+    die "Финальная проверка прав MTProxy не прошла."
 
 runuser -u tproxy -- test -r /srv/tproxy-site/index.html ||
-    die "Final site permission check failed."
+    die "Финальная проверка прав сайта не прошла."
 
 for p in 2398 8080 8081 80 443; do
-    ss -lnt | grep -Eq ":(${p})\b" || die "Expected port ${p} is not listening."
+    ss -lnt | grep -Eq ":(${p})\b" || die "Ожидаемый порт ${p} не слушается."
 done
 
 write_manifest "$DOMAIN" "$EMAIL" "$REUSE_CADDY" "$REUSE_MT" "$REUSE_RELAY"
@@ -469,23 +469,23 @@ TELEGRAM_SECRET="${SECRET#dd}"
 
 echo
 echo "============================================================"
-echo "             TELEGRAM WEB PROXY IS READY"
+echo "          TELEGRAM WEB PROXY ГОТОВ К РАБОТЕ"
 echo "============================================================"
 echo
-echo "Domain:"
+echo "Домен:"
 echo "  https://${DOMAIN}/"
 echo
 echo "Secret:"
 echo "  ${SECRET}"
 echo
-echo "Telegram Web Proxy:"
+echo "Ссылка для Telegram:"
 echo "  https://t.me/webproxy?server=${DOMAIN}&secret=${TELEGRAM_SECRET}"
 echo
-echo "Status:"
+echo "Статус:"
 echo "  HTTPS          OK"
 echo "  MTProxy        ACTIVE"
 echo "  Relay          READY"
 echo "  Firewall       ACTIVE"
 echo
-echo "IMPORTANT: keep the secret private."
+echo "ВАЖНО: не передавайте secret третьим лицам."
 echo "============================================================"

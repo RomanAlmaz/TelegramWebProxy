@@ -12,7 +12,7 @@ print_unit() {
     local state enabled
 
     if ! systemctl list-unit-files "${unit}" >/dev/null 2>&1; then
-        printf "  %-28s not installed\n" "$unit"
+        printf "  %-28s не установлен\n" "$unit"
         return 0
     fi
 
@@ -27,14 +27,14 @@ print_port() {
 
     if port_is_listening "$port"; then
         if [[ "$process" != "any" ]] && port_has_expected_process "$port" "$process"; then
-            printf "  :%-5s listening (%s)\n" "$port" "$process"
+            printf "  :%-5s слушается (%s)\n" "$port" "$process"
         else
             local line
             line="$(ss -lntp 2>/dev/null | grep -E ":${port}\b" | head -n1 || true)"
-            printf "  :%-5s listening %s\n" "$port" "${line:-}"
+            printf "  :%-5s слушается %s\n" "$port" "${line:-}"
         fi
     else
-        printf "  :%-5s not listening\n" "$port"
+        printf "  :%-5s не слушается\n" "$port"
     fi
 }
 
@@ -53,20 +53,20 @@ DOMAIN="$(get_domain_from_config)"
 SECRET="$(get_secret_from_profiles || true)"
 
 echo "============================================================"
-echo "          TELEGRAM WEB PROXY STATUS"
+echo "          СТАТУС TELEGRAM WEB PROXY"
 echo "============================================================"
 echo
 
 if [[ ! -f /usr/local/bin/tproxy-server && ! -f /etc/tproxy-server/config.json ]]; then
-    echo "Proxy is not installed on this VPS."
+    echo "Прокси на этом VPS не установлен."
     echo
-    echo "Install with:"
+    echo "Установка:"
     echo "  git clone ${PROJECT_REPO_URL}"
     echo "  cd ${PROJECT_REPO_NAME} && chmod +x *.sh && sudo bash install-proxy.sh"
     exit 0
 fi
 
-echo "--- services ---"
+echo "--- сервисы ---"
 print_unit mtproxy.service
 print_unit tproxy-server.service
 print_unit caddy.service
@@ -74,7 +74,7 @@ print_unit tproxy-firewall.service
 print_unit refresh-mtproxy-config.timer
 
 echo
-echo "--- ports ---"
+echo "--- порты ---"
 print_port 80 caddy
 print_port 443 caddy
 print_port 2398 mtproto-proxy
@@ -93,49 +93,49 @@ if [[ -n "$DOMAIN" ]]; then
         printf "  %-18s FAIL (https://${DOMAIN}/)\n" "HTTPS"
     fi
 else
-    printf "  %-18s unknown domain\n" "HTTPS"
+    printf "  %-18s домен не настроен\n" "HTTPS"
 fi
 
 echo
-echo "--- configuration ---"
+echo "--- конфигурация ---"
 if [[ -n "$DOMAIN" ]]; then
-    echo "  Domain:  https://${DOMAIN}/"
+    echo "  Домен:   https://${DOMAIN}/"
 else
-    echo "  Domain:  not configured"
+    echo "  Домен:   не настроен"
 fi
 
 if [[ -n "$SECRET" ]]; then
     echo "  Secret:  $(mask_secret "$SECRET")"
     TELEGRAM_SECRET="${SECRET#dd}"
-    echo "  Telegram link:"
+    echo "  Ссылка для Telegram:"
     echo "    https://t.me/webproxy?server=${DOMAIN}&secret=${TELEGRAM_SECRET}"
 else
-    echo "  Secret:  not found"
+    echo "  Secret:  не найден"
 fi
 
 if [[ -r "$MANIFEST" ]]; then
     echo
-    echo "--- install manifest ---"
+    echo "--- manifest установки ---"
     echo "  Manifest: $MANIFEST"
-    echo "  Installed: $(read_manifest_value installed_by unknown)"
-    echo "  Version:   $(read_manifest_value version unknown)"
-    echo "  Project:   $(read_manifest_value project_root unknown)"
+    echo "  Установлен: $(read_manifest_value installed_by unknown)"
+    echo "  Версия:     $(read_manifest_value version unknown)"
+    echo "  Проект:     $(read_manifest_value project_root unknown)"
 fi
 
 echo
-echo "--- site ---"
+echo "--- сайт ---"
 if [[ -f "$SITE_TARGET/index.html" ]]; then
     file_count="$(find "$SITE_TARGET" -type f | wc -l | tr -d ' ')"
     site_size="$(du -sh "$SITE_TARGET" 2>/dev/null | awk '{print $1}')"
-    echo "  Path:    $SITE_TARGET"
-    echo "  Files:   $file_count"
-    echo "  Size:    ${site_size:-unknown}"
+    echo "  Путь:    $SITE_TARGET"
+    echo "  Файлов:  $file_count"
+    echo "  Размер:  ${site_size:-неизвестно}"
 else
-    echo "  Site not deployed at $SITE_TARGET"
+    echo "  Сайт не развёрнут в $SITE_TARGET"
 fi
 
 echo
-echo "--- recent logs (last 5 lines) ---"
+echo "--- последние логи (5 строк) ---"
 for unit in mtproxy tproxy-server caddy; do
     if systemctl list-units --all --type=service 2>/dev/null | grep -q "${unit}.service"; then
         echo "  [$unit]"

@@ -14,29 +14,29 @@ if [[ $# -gt 0 ]]; then
     SOURCE_DIR="$1"
 fi
 
-[[ -d "$SOURCE_DIR" ]] || die "Site directory not found: $SOURCE_DIR"
-[[ -f "$SOURCE_DIR/index.html" ]] || die "index.html not found in $SOURCE_DIR"
+[[ -d "$SOURCE_DIR" ]] || die "Каталог сайта не найден: $SOURCE_DIR"
+[[ -f "$SOURCE_DIR/index.html" ]] || die "index.html не найден в $SOURCE_DIR"
 
 if [[ ! -f /etc/tproxy-server/config.json ]]; then
-    die "Proxy is not installed. Run install-proxy.sh first."
+    die "Прокси не установлен. Сначала запустите install-proxy.sh."
 fi
 
 if ! id tproxy >/dev/null 2>&1; then
-    die "User tproxy not found. Run install-proxy.sh first."
+    die "Пользователь tproxy не найден. Сначала запустите install-proxy.sh."
 fi
 
 echo "============================================================"
-echo "          DEPLOY PUBLIC SITE"
+echo "          ДЕПЛОЙ ПУБЛИЧНОГО САЙТА"
 echo "============================================================"
 echo
-echo "Source:  $SOURCE_DIR"
-echo "Target:  $SITE_TARGET"
+echo "Источник: $SOURCE_DIR"
+echo "Цель:     $SITE_TARGET"
 echo
 
 deploy_site_files "$SOURCE_DIR" "$SITE_TARGET"
 
 if [[ -x /usr/local/bin/tproxy-server ]]; then
-    echo "Validating relay configuration..."
+    echo "Проверка конфигурации relay..."
     /usr/local/bin/tproxy-server \
         -config /etc/tproxy-server/config.json \
         -profiles-file /etc/tproxy-server/profiles.json \
@@ -44,7 +44,7 @@ if [[ -x /usr/local/bin/tproxy-server ]]; then
 fi
 
 if systemctl list-unit-files tproxy-server.service >/dev/null 2>&1; then
-    echo "Restarting tproxy-server..."
+    echo "Перезапуск tproxy-server..."
     systemctl restart tproxy-server.service
 
     READY=0
@@ -59,11 +59,11 @@ if systemctl list-unit-files tproxy-server.service >/dev/null 2>&1; then
     if [[ "$READY" == "1" ]]; then
         echo "      Relay /readyz OK"
     else
-        echo "WARNING: relay did not become ready after restart."
-        echo "Check: journalctl -u tproxy-server -n 50 --no-pager"
+        echo "ВНИМАНИЕ: relay не перешёл в ready после перезапуска."
+        echo "Проверьте: journalctl -u tproxy-server -n 50 --no-pager"
     fi
 else
-    echo "tproxy-server service not found; files deployed only."
+    echo "Сервис tproxy-server не найден; файлы только скопированы."
 fi
 
 DOMAIN="$(get_domain_from_config)"
@@ -71,14 +71,14 @@ file_count="$(find "$SITE_TARGET" -type f | wc -l | tr -d ' ')"
 
 echo
 echo "============================================================"
-echo "             SITE DEPLOYED"
+echo "          САЙТ РАЗВЁРНУТ"
 echo "============================================================"
 echo
-echo "Files deployed: $file_count"
-echo "Site path:      $SITE_TARGET"
+echo "Файлов развёрнуто: $file_count"
+echo "Путь к сайту:      $SITE_TARGET"
 if [[ -n "$DOMAIN" ]]; then
-    echo "Public URL:     https://${DOMAIN}/"
+    echo "Публичный URL:     https://${DOMAIN}/"
 fi
 echo
-echo "Caddy restart is not required."
+echo "Перезапуск Caddy не требуется."
 echo "============================================================"

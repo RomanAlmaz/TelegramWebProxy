@@ -21,11 +21,11 @@ clone_project_repo() {
     local target_dir="${1:-$PROJECT_INSTALL_DIR}"
 
     if [[ -d "$target_dir/.git" || -f "$target_dir/install-proxy.sh" ]]; then
-        echo "      Project already exists at $target_dir"
+        echo "      Проект уже существует в $target_dir"
         return 0
     fi
 
-    command -v git >/dev/null 2>&1 || die "git is required to clone $PROJECT_REPO_URL"
+    command -v git >/dev/null 2>&1 || die "Для клонирования нужен git: $PROJECT_REPO_URL"
 
     install -d -m 0755 "$(dirname "$target_dir")"
     git clone --depth 1 "$PROJECT_REPO_URL" "$target_dir"
@@ -33,7 +33,7 @@ clone_project_repo() {
 
 die() {
     echo
-    echo "ERROR: $*" >&2
+    echo "ОШИБКА: $*" >&2
     exit 1
 }
 
@@ -63,46 +63,46 @@ valid_secret() {
 }
 
 require_root() {
-    [[ $EUID -eq 0 ]] || die "Run this script as root."
+    [[ $EUID -eq 0 ]] || die "Запустите скрипт от root."
 }
 
 require_ubuntu() {
     . /etc/os-release
-    [[ "${ID:-}" == "ubuntu" ]] || die "Ubuntu is required."
+    [[ "${ID:-}" == "ubuntu" ]] || die "Требуется Ubuntu."
     dpkg --compare-versions "${VERSION_ID:-0}" ge "22.04" ||
-        die "Ubuntu 22.04 or newer is required."
+        die "Требуется Ubuntu 22.04 или новее."
 }
 
 require_x86_64() {
-    [[ "$(uname -m)" == "x86_64" ]] || die "x86_64 is required."
+    [[ "$(uname -m)" == "x86_64" ]] || die "Требуется архитектура x86_64."
 }
 
 require_local_repo() {
-    [[ -d "$TPROXY_REPO" ]] || die "tproxy-server not found: $TPROXY_REPO"
+    [[ -d "$TPROXY_REPO" ]] || die "Не найден tproxy-server: $TPROXY_REPO"
     [[ -f "$TPROXY_REPO/cmd/tproxy-server/main.go" ]] ||
-        die "Invalid tproxy-server source at $TPROXY_REPO"
+        die "Некорректные исходники tproxy-server: $TPROXY_REPO"
 }
 
 ensure_tproxy_repo() {
     if [[ -f "$TPROXY_REPO/cmd/tproxy-server/main.go" ]]; then
-        echo "      Using local tproxy-server source"
+        echo "      Используем локальные исходники tproxy-server"
         return 0
     fi
 
-    command -v git >/dev/null 2>&1 || die "git is required to download tproxy-server"
+    command -v git >/dev/null 2>&1 || die "Для загрузки tproxy-server нужен git"
 
-    echo "      Downloading official tproxy-server..."
+    echo "      Загрузка официального tproxy-server..."
     rm -rf "$TPROXY_REPO"
     git clone --depth 1 "$TPROXY_UPSTREAM_URL" "$TPROXY_REPO"
 
     [[ -f "$TPROXY_REPO/cmd/tproxy-server/main.go" ]] ||
-        die "Failed to download tproxy-server from $TPROXY_UPSTREAM_URL"
+        die "Не удалось загрузить tproxy-server из $TPROXY_UPSTREAM_URL"
 }
 
 require_local_site() {
-    [[ -d "$SITE_SOURCE" ]] || die "site folder not found: $SITE_SOURCE"
+    [[ -d "$SITE_SOURCE" ]] || die "Не найдена папка site: $SITE_SOURCE"
     [[ -f "$SITE_SOURCE/index.html" ]] ||
-        die "site/index.html not found."
+        die "Не найден site/index.html."
 }
 
 port_is_listening() {
@@ -122,17 +122,17 @@ check_install_port() {
     local process="$2"
 
     if ! port_is_listening "$port"; then
-        echo "      :${port} free"
+        echo "      :${port} свободен"
         return 0
     fi
 
     if port_has_expected_process "$port" "$process"; then
-        echo "      :${port} already used by ${process}; continuing."
+        echo "      :${port} уже занят ${process}; продолжаем."
         return 0
     fi
 
     ss -lntp | grep -E ":${port}\b" || true
-    die "Port ${port} is occupied by an unexpected process."
+    die "Порт ${port} занят неожиданным процессом."
 }
 
 fix_mtproxy_permissions() {
@@ -142,7 +142,7 @@ fix_mtproxy_permissions() {
     chmod 0755 /opt/MTProxy/objs/bin/mtproto-proxy
 
     runuser -u mtproxy -- test -x /opt/MTProxy/objs/bin/mtproto-proxy ||
-        die "mtproxy user cannot execute mtproto-proxy."
+        die "Пользователь mtproxy не может выполнить mtproto-proxy."
 }
 
 deploy_site_files() {
@@ -157,9 +157,9 @@ deploy_site_files() {
     find "$target_dir" -type f -exec chmod 0640 {} +
 
     runuser -u tproxy -- test -x "$target_dir" ||
-        die "tproxy user cannot traverse public site."
+        die "Пользователь tproxy не может получить доступ к каталогу сайта."
     runuser -u tproxy -- test -r "$target_dir/index.html" ||
-        die "tproxy user cannot read public site index.html."
+        die "Пользователь tproxy не может прочитать index.html сайта."
 }
 
 read_manifest_value() {
@@ -305,21 +305,21 @@ mask_secret() {
 show_failure() {
     echo
     echo "============================================================"
-    echo "                    INSTALLATION FAILED"
+    echo "                    УСТАНОВКА НЕ УДАЛАСЬ"
     echo "============================================================"
     echo
-    echo "--- services ---"
+    echo "--- сервисы ---"
     systemctl --no-pager --full status mtproxy tproxy-server caddy tproxy-firewall 2>/dev/null || true
     echo
-    echo "--- MTProxy log ---"
+    echo "--- лог MTProxy ---"
     journalctl -u mtproxy -n 40 --no-pager 2>/dev/null || true
     echo
-    echo "--- relay log ---"
+    echo "--- лог relay ---"
     journalctl -u tproxy-server -n 40 --no-pager 2>/dev/null || true
     echo
-    echo "--- site permissions ---"
+    echo "--- права на сайт ---"
     namei -l "$SITE_TARGET/index.html" 2>/dev/null || true
     echo
-    echo "--- MTProxy permissions ---"
+    echo "--- права MTProxy ---"
     namei -l /opt/MTProxy/objs/bin/mtproto-proxy 2>/dev/null || true
 }

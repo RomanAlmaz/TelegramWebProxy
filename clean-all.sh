@@ -144,11 +144,11 @@ remove_extra_users() {
         [[ "$uid" -ge 1000 ]] || continue
         [[ "$user" == "nobody" ]] && continue
         is_kept_login_user "$user" && {
-            echo "      keeping user $user"
+            echo "      сохраняем пользователя $user"
             continue
         }
 
-        echo "      removing user $user"
+        echo "      удаляем пользователя $user"
         userdel -r -f "$user" 2>/dev/null || userdel -f "$user" 2>/dev/null || true
         rm -rf "$home" 2>/dev/null || true
     done < /etc/passwd
@@ -166,7 +166,7 @@ clean_home_directories() {
         [[ -e "$entry" ]] || continue
         owner="$(stat -c '%U' "$entry" 2>/dev/null || true)"
         if [[ -n "$owner" ]] && is_kept_login_user "$owner"; then
-            echo "      keeping home $entry"
+            echo "      сохраняем домашний каталог $entry"
             continue
         fi
         rm -rf "$entry" 2>/dev/null || true
@@ -179,14 +179,14 @@ clean_home_directories() {
 reset_package_state() {
     local pkg
 
-    echo "      marking non-essential packages as auto-installed..."
+    echo "      помечаем необязательные пакеты как auto-installed..."
     while read -r pkg; do
         [[ -n "$pkg" ]] || continue
         is_keep_package "$pkg" && continue
         apt-mark auto "$pkg" 2>/dev/null || true
     done < <(dpkg-query -W -f='${Package}\n' 2>/dev/null || true)
 
-    echo "      keeping essential packages marked manual..."
+    echo "      сохраняем essential-пакеты как manual..."
     for pkg in "${KEEP_PACKAGES[@]}"; do
         if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
             apt-mark manual "$pkg" 2>/dev/null || true
@@ -197,48 +197,48 @@ reset_package_state() {
         apt-mark manual "$pkg" 2>/dev/null || true
     done < <(dpkg-query -W -f='${Package}\n' 2>/dev/null | grep -E '^linux-(image|headers|modules)' || true)
 
-    echo "      purging auto-installed packages..."
+    echo "      удаляем auto-installed пакеты..."
     apt-get autoremove --purge -y || true
     apt-get autoclean -y || true
     apt-get clean -y || true
 }
 
 echo "============================================================"
-echo "            FULL VPS FACTORY RESET"
+echo "          ПОЛНЫЙ СБРОС VPS (FACTORY RESET)"
 echo "============================================================"
 echo
-echo "WARNING: this script wipes the ENTIRE VPS."
-echo "After it finishes the server will be as close to fresh Ubuntu as possible."
+echo "ВНИМАНИЕ: этот скрипт полностью очищает VPS."
+echo "После завершения сервер будет максимально близок к чистой Ubuntu."
 echo
-echo "It will REMOVE:"
-echo "  - Telegram Web Proxy and all other installed software"
-echo "  - docker, nginx, apache, node, python tools, databases, etc."
-echo "  - all manually installed apt packages except SSH/system base"
-echo "  - all custom systemd services"
-echo "  - all user accounts except root and the current login user"
-echo "  - all files in /root (except .ssh), other /home users, /opt, /srv, /var/www"
-echo "  - all binaries in /usr/local"
-echo "  - firewall rules, cron jobs, logs, temp files, project files"
-echo "  - snap packages"
+echo "Будет УДАЛЕНО:"
+echo "  - Telegram Web Proxy и весь другой установленный софт"
+echo "  - docker, nginx, apache, node, python, базы данных и т.д."
+echo "  - все apt-пакеты, установленные вручную (кроме SSH и базовой системы)"
+echo "  - все custom systemd-сервисы"
+echo "  - все пользователи кроме root и текущего пользователя входа"
+echo "  - все файлы в /root (кроме .ssh), другие /home, /opt, /srv, /var/www"
+echo "  - все бинарники в /usr/local"
+echo "  - правила firewall, cron, логи, temp, файлы проекта"
+echo "  - snap-пакеты"
 echo
-echo "It will KEEP:"
-echo "  - Ubuntu base system"
-echo "  - SSH access and network settings"
-echo "  - cloud-init (for cloud VPS providers)"
-echo "  - current login user and their home directory (including .ssh)"
+echo "Будет СОХРАНЕНО:"
+echo "  - базовая система Ubuntu"
+echo "  - SSH и сетевые настройки"
+echo "  - cloud-init (для облачных VPS)"
+echo "  - текущий пользователь и его домашний каталог (включая .ssh)"
 echo
-echo "Type the server hostname to confirm:"
+echo "Введите hostname сервера для подтверждения:"
 read -r CONFIRM_HOST
 CURRENT_HOST="$(hostname)"
-[[ "$CONFIRM_HOST" == "$CURRENT_HOST" ]] || { echo "Cancelled."; exit 0; }
+[[ "$CONFIRM_HOST" == "$CURRENT_HOST" ]] || { echo "Отменено."; exit 0; }
 echo
-echo "Type FACTORY-RESET to continue:"
+echo "Введите FACTORY-RESET для продолжения:"
 read -r CONFIRM
-[[ "$CONFIRM" == "FACTORY-RESET" ]] || { echo "Cancelled."; exit 0; }
+[[ "$CONFIRM" == "FACTORY-RESET" ]] || { echo "Отменено."; exit 0; }
 
 init_keep_login_users
 echo
-echo "Keeping login users: ${KEEP_LOGIN_USERS[*]}"
+echo "Сохраняем пользователей: ${KEEP_LOGIN_USERS[*]}"
 
 PROJECT_TO_REMOVE="$PROJECT_ROOT"
 if [[ -r "$MANIFEST" ]]; then
@@ -249,10 +249,10 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 echo
-echo "[1/18] Stopping proxy services..."
+echo "[1/18] Остановка сервисов прокси..."
 stop_proxy_units
 
-echo "[2/18] Stopping common services..."
+echo "[2/18] Остановка типовых сервисов..."
 for unit in \
     nginx.service apache2.service httpd.service \
     docker.service docker.socket containerd.service \
@@ -262,19 +262,19 @@ do
     stop_and_disable "$unit"
 done
 
-echo "[3/18] Stopping docker containers..."
+echo "[3/18] Остановка docker-контейнеров..."
 if command -v docker >/dev/null 2>&1; then
     docker ps -aq 2>/dev/null | xargs -r docker stop 2>/dev/null || true
     docker ps -aq 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
     docker system prune -af --volumes 2>/dev/null || true
 fi
 
-echo "[4/18] Removing custom systemd units..."
+echo "[4/18] Удаление custom systemd unit-ов..."
 remove_custom_systemd_units
 disable_proxy_units
 remove_proxy_service_files
 
-echo "[5/18] Removing proxy data and binaries..."
+echo "[5/18] Удаление данных и бинарников прокси..."
 remove_proxy_data
 rm -f \
     /usr/local/bin/caddy \
@@ -283,11 +283,11 @@ rm -f \
     /usr/local/bin/tproxy-server.next \
     /usr/local/sbin/refresh-mtproxy-config
 
-echo "[6/18] Removing /usr/local contents..."
+echo "[6/18] Очистка /usr/local..."
 find /usr/local -mindepth 1 -maxdepth 1 ! -name 'share' -exec rm -rf {} + 2>/dev/null || true
 rm -rf /usr/local/go /usr/local/bin/* /usr/local/sbin/* 2>/dev/null || true
 
-echo "[7/18] Removing web, app and data directories..."
+echo "[7/18] Удаление web, app и data каталогов..."
 rm -rf \
     /etc/caddy \
     /etc/nginx \
@@ -310,14 +310,14 @@ rm -rf \
     "$MANIFEST" \
     /run/lock/tproxy-server-update.lock
 
-echo "[8/18] Removing extra users..."
+echo "[8/18] Удаление лишних пользователей..."
 remove_extra_users
 
-echo "[9/18] Cleaning /root and /home..."
+echo "[9/18] Очистка /root и /home..."
 find /root -mindepth 1 -maxdepth 1 ! -name '.ssh' -exec rm -rf {} + 2>/dev/null || true
 clean_home_directories
 
-echo "[10/18] Resetting firewall..."
+echo "[10/18] Сброс firewall..."
 remove_proxy_firewall
 nft flush ruleset 2>/dev/null || true
 iptables -F 2>/dev/null || true
@@ -330,11 +330,11 @@ ip6tables -F 2>/dev/null || true
 ip6tables -X 2>/dev/null || true
 ufw --force reset 2>/dev/null || true
 
-echo "[11/18] Removing cron jobs..."
+echo "[11/18] Удаление cron-задач..."
 rm -f /etc/cron.d/* /var/spool/cron/crontabs/* 2>/dev/null || true
 find /etc/cron.daily /etc/cron.hourly /etc/cron.weekly /etc/cron.monthly -mindepth 1 -delete 2>/dev/null || true
 
-echo "[12/18] Removing snap packages..."
+echo "[12/18] Удаление snap-пакетов..."
 if command -v snap >/dev/null 2>&1; then
     snap list 2>/dev/null | awk 'NR>1 {print $1}' | while read -r snap_pkg; do
         [[ -n "$snap_pkg" ]] || continue
@@ -342,18 +342,18 @@ if command -v snap >/dev/null 2>&1; then
     done
 fi
 
-echo "[13/18] Resetting apt package state..."
+echo "[13/18] Сброс состояния apt-пакетов..."
 apt-get update || true
 reset_package_state
 
-echo "[14/18] Cleaning temp and cache..."
+echo "[14/18] Очистка temp и cache..."
 rm -rf \
     /tmp/* \
     /var/tmp/* \
     /var/cache/apt/archives/*.deb \
     /root/.cache/* 2>/dev/null || true
 
-echo "[15/18] Cleaning logs..."
+echo "[15/18] Очистка логов..."
 journalctl --rotate 2>/dev/null || true
 journalctl --vacuum-time=1s 2>/dev/null || true
 find /var/log -type f -name '*.log' -exec truncate -s 0 {} + 2>/dev/null || true
@@ -362,39 +362,39 @@ find /var/log -type f -name '*.1' -delete 2>/dev/null || true
 : > /root/.bash_history 2>/dev/null || true
 history -c 2>/dev/null || true
 
-echo "[16/18] Reloading systemd..."
+echo "[16/18] Перезагрузка systemd..."
 systemctl daemon-reload
 systemctl reset-failed 2>/dev/null || true
 
-echo "[17/18] Removing project files..."
+echo "[17/18] Удаление файлов проекта..."
 if [[ -d "$PROJECT_TO_REMOVE" ]]; then
-    echo "      Removing $PROJECT_TO_REMOVE"
+    echo "      Удаляем $PROJECT_TO_REMOVE"
     rm -rf "$PROJECT_TO_REMOVE"
 fi
 
-echo "[18/18] Final verification..."
+echo "[18/18] Финальная проверка..."
 echo
-echo "Active listeners:"
-ss -lntp 2>/dev/null | grep -v '127.0.0.1:22' || echo "  only SSH (expected)"
+echo "Активные слушатели:"
+ss -lntp 2>/dev/null | grep -v '127.0.0.1:22' || echo "  только SSH (ожидаемо)"
 
 echo
-echo "Remaining custom systemd units:"
-find /etc/systemd/system -maxdepth 1 -type f 2>/dev/null | head -n 20 || echo "  none"
+echo "Оставшиеся custom systemd unit-ы:"
+find /etc/systemd/system -maxdepth 1 -type f 2>/dev/null | head -n 20 || echo "  нет"
 
 echo
-echo "Disk usage:"
+echo "Использование диска:"
 df -h / /var /home 2>/dev/null || true
 
 echo
 echo "============================================================"
-echo "            VPS FACTORY RESET COMPLETE"
+echo "          СБРОС VPS ЗАВЕРШЁН"
 echo "============================================================"
 echo
-echo "The server is clean and ready for a fresh setup."
-echo "Clone the project again and run install-proxy.sh:"
+echo "Сервер очищен и готов к новой установке."
+echo "Снова клонируйте проект и запустите install-proxy.sh:"
 echo "  git clone ${PROJECT_REPO_URL}"
 echo "  cd ${PROJECT_REPO_NAME} && chmod +x *.sh && sudo bash install-proxy.sh"
 echo
-echo "Reboot is strongly recommended:"
+echo "Настоятельно рекомендуется перезагрузка:"
 echo "  reboot"
 echo "============================================================"
