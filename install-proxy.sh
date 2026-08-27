@@ -272,7 +272,7 @@ cat > /etc/tproxy-server/config.json <<EOF
 EOF
 
 cat > /etc/tproxy-server/profiles.json <<EOF
-{"profiles":[{"name":"default","secret":"$SECRET","backend":"127.0.0.1:2398"}]}
+{"profiles":[{"name":"default","secret":"$SECRET","backend":"127.0.0.1:2398","carrier_mode":"https"}]}
 EOF
 
 chown root:tproxy /etc/tproxy-server/config.json /etc/tproxy-server/profiles.json
