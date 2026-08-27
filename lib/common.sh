@@ -13,6 +13,7 @@ INSTALLED_REPO="/opt/tproxy-server-source"
 PROJECT_REPO_URL="https://github.com/RomanAlmaz/TelegramWebProxy.git"
 PROJECT_REPO_NAME="TelegramWebProxy"
 PROJECT_INSTALL_DIR="/root/${PROJECT_REPO_NAME}"
+TPROXY_UPSTREAM_URL="https://github.com/telegramdesktop/tproxy-server.git"
 
 VERSION="1.0"
 
@@ -80,6 +81,22 @@ require_local_repo() {
     [[ -d "$TPROXY_REPO" ]] || die "tproxy-server not found: $TPROXY_REPO"
     [[ -f "$TPROXY_REPO/cmd/tproxy-server/main.go" ]] ||
         die "Invalid tproxy-server source at $TPROXY_REPO"
+}
+
+ensure_tproxy_repo() {
+    if [[ -f "$TPROXY_REPO/cmd/tproxy-server/main.go" ]]; then
+        echo "      Using local tproxy-server source"
+        return 0
+    fi
+
+    command -v git >/dev/null 2>&1 || die "git is required to download tproxy-server"
+
+    echo "      Downloading official tproxy-server..."
+    rm -rf "$TPROXY_REPO"
+    git clone --depth 1 "$TPROXY_UPSTREAM_URL" "$TPROXY_REPO"
+
+    [[ -f "$TPROXY_REPO/cmd/tproxy-server/main.go" ]] ||
+        die "Failed to download tproxy-server from $TPROXY_UPSTREAM_URL"
 }
 
 require_local_site() {

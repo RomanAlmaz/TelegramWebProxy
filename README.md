@@ -98,12 +98,13 @@ Secret никому не передавайте.
 Полная установка:
 
 1. Проверка системы, DNS и портов
-2. Установка зависимостей
-3. Сборка MTProxy и tproxy-server из `tproxy-server/`
-4. Установка Caddy
-5. Деплой сайта из `site/` в `/srv/tproxy-site`
-6. Настройка systemd, firewall, HTTPS
-7. Health-check всех компонентов
+2. Загрузка или использование локального `tproxy-server`
+3. Установка зависимостей
+4. Сборка MTProxy и tproxy-server
+5. Установка Caddy
+6. Деплой сайта из `site/` в `/srv/tproxy-site`
+7. Настройка systemd, firewall, HTTPS
+8. Health-check всех компонентов
 
 ### status-proxy.sh
 
@@ -147,14 +148,15 @@ sudo bash deploy-site.sh /path/to/custom-site
 - docker, nginx, apache, node, базы данных и т.д.
 - все apt-пакеты, установленные вручную (кроме SSH и базовой системы)
 - все custom systemd-сервисы
-- всех пользователей кроме root
-- все файлы в `/root` (кроме `.ssh`), `/home`, `/opt`, `/srv`, `/var/www`
+- всех пользователей кроме root и **текущего пользователя** (через которого запущен скрипт)
+- все файлы в `/root` (кроме `.ssh`), домашние папки других пользователей, `/opt`, `/srv`, `/var/www`
 - все бинарники в `/usr/local`
 - firewall, cron, логи, temp, snap-пакеты, файлы проекта
 
 **Сохраняет:**
 
 - Ubuntu, SSH, сеть, cloud-init
+- текущего пользователя и его `/home` (включая `.ssh` - SSH-ключи не удаляются)
 
 Подтверждение: введите **hostname сервера**, затем `FACTORY-RESET`.
 

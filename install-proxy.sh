@@ -34,7 +34,6 @@ EOF
 require_root
 require_x86_64
 require_ubuntu
-require_local_repo
 require_local_site
 
 while true; do
@@ -141,6 +140,7 @@ fi
 
 echo
 echo "[5/10] Preparing local source..."
+ensure_tproxy_repo
 rm -rf "$INSTALLED_REPO"
 install -d -m 0755 "$INSTALLED_REPO"
 cp -a "$TPROXY_REPO/." "$INSTALLED_REPO/"

@@ -8,6 +8,39 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 require_root
 
+KEEP_LOGIN_USERS=(root)
+
+add_keep_login_user() {
+    local user="$1"
+    local existing
+
+    [[ -n "$user" ]] || return 0
+    [[ "$user" == "root" ]] && return 0
+
+    for existing in "${KEEP_LOGIN_USERS[@]}"; do
+        [[ "$existing" == "$user" ]] && return 0
+    done
+
+    KEEP_LOGIN_USERS+=("$user")
+}
+
+is_kept_login_user() {
+    local user="$1"
+    local kept
+
+    for kept in "${KEEP_LOGIN_USERS[@]}"; do
+        [[ "$kept" == "$user" ]] && return 0
+    done
+
+    return 1
+}
+
+init_keep_login_users() {
+    add_keep_login_user "${SUDO_USER:-}"
+    add_keep_login_user "$(logname 2>/dev/null || true)"
+    add_keep_login_user "$(who am i 2>/dev/null | awk '{print $1}' || true)"
+}
+
 KEEP_PACKAGES=(
     openssh-server
     openssh-client
@@ -110,6 +143,10 @@ remove_extra_users() {
     while IFS=: read -r user _ uid _ _ home shell; do
         [[ "$uid" -ge 1000 ]] || continue
         [[ "$user" == "nobody" ]] && continue
+        is_kept_login_user "$user" && {
+            echo "      keeping user $user"
+            continue
+        }
 
         echo "      removing user $user"
         userdel -r -f "$user" 2>/dev/null || userdel -f "$user" 2>/dev/null || true
@@ -120,6 +157,23 @@ remove_extra_users() {
         id "$user" >/dev/null 2>&1 || continue
         userdel -f "$user" 2>/dev/null || true
     done
+}
+
+clean_home_directories() {
+    local entry owner
+
+    for entry in /home/* /home/.[!.]* /home/..?*; do
+        [[ -e "$entry" ]] || continue
+        owner="$(stat -c '%U' "$entry" 2>/dev/null || true)"
+        if [[ -n "$owner" ]] && is_kept_login_user "$owner"; then
+            echo "      keeping home $entry"
+            continue
+        fi
+        rm -rf "$entry" 2>/dev/null || true
+    done
+
+    mkdir -p /home
+    chmod 755 /home
 }
 
 reset_package_state() {
@@ -161,8 +215,8 @@ echo "  - Telegram Web Proxy and all other installed software"
 echo "  - docker, nginx, apache, node, python tools, databases, etc."
 echo "  - all manually installed apt packages except SSH/system base"
 echo "  - all custom systemd services"
-echo "  - all user accounts except root"
-echo "  - all files in /root (except .ssh), /home, /opt, /srv, /var/www"
+echo "  - all user accounts except root and the current login user"
+echo "  - all files in /root (except .ssh), other /home users, /opt, /srv, /var/www"
 echo "  - all binaries in /usr/local"
 echo "  - firewall rules, cron jobs, logs, temp files, project files"
 echo "  - snap packages"
@@ -171,6 +225,7 @@ echo "It will KEEP:"
 echo "  - Ubuntu base system"
 echo "  - SSH access and network settings"
 echo "  - cloud-init (for cloud VPS providers)"
+echo "  - current login user and their home directory (including .ssh)"
 echo
 echo "Type the server hostname to confirm:"
 read -r CONFIRM_HOST
@@ -180,6 +235,10 @@ echo
 echo "Type FACTORY-RESET to continue:"
 read -r CONFIRM
 [[ "$CONFIRM" == "FACTORY-RESET" ]] || { echo "Cancelled."; exit 0; }
+
+init_keep_login_users
+echo
+echo "Keeping login users: ${KEEP_LOGIN_USERS[*]}"
 
 PROJECT_TO_REMOVE="$PROJECT_ROOT"
 if [[ -r "$MANIFEST" ]]; then
@@ -256,9 +315,7 @@ remove_extra_users
 
 echo "[9/18] Cleaning /root and /home..."
 find /root -mindepth 1 -maxdepth 1 ! -name '.ssh' -exec rm -rf {} + 2>/dev/null || true
-find /home -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
-mkdir -p /home
-chmod 755 /home
+clean_home_directories
 
 echo "[10/18] Resetting firewall..."
 remove_proxy_firewall
